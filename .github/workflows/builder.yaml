@@ -1,0 +1,28 @@
+name: Builder
+
+env:
+  BUILD_ARGS: "--test"
+  MONITORED_FILES: "build.yaml config.yaml Dockerfile rootfs"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build Add-on
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Build
+        uses: home-assistant/builder@master
+        with:
+          args: |
+            ${{ env.BUILD_ARGS }} \
+            --all \
+            --target telegram_bot

@@ -1,0 +1,22 @@
+name: "Telegram Concert Bot"
+version: "1.0.0"
+slug: "telegram_concert_bot"
+description: "Telegram bot for concert notifications with Home Assistant integration"
+url: "https://github.com/yourusername/homeassistant-telegram-concert-bot"
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+startup: application
+boot: auto
+init: false
+map:
+  - share:rw
+options:
+  telegram_token: ""
+  log_level: "info"
+schema:
+  telegram_token: "str"
+  log_level: "list(trace|debug|info|notice|warning|error|fatal)"
