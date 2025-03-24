@@ -13,16 +13,91 @@ on:
       - main
 
 jobs:
-  build:
+  init:
     runs-on: ubuntu-latest
-    name: Build Add-on
+    name: Initialize builds
+    outputs:
+      changed_addons: ${{ steps.changed_addons.outputs.addons }}
+      changed: ${{ steps.changed_addons.outputs.changed }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Build
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Get changed files
+        id: changed_files
+        uses: jitterbit/get-changed-files@v1
+        if: github.event_name == 'pull_request'
+
+      - name: Find add-on directories
+        id: addons
+        uses: home-assistant/actions/helpers/find-addons@master
+
+      - name: Get changed add-ons
+        id: changed_addons
+        run: |
+          declare -a changed_addons
+          for addon in ${{ steps.addons.outputs.addons }}; do
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              if [[ $(echo "${{ steps.changed_files.outputs.all }}" | grep -E "^${addon}/" | wc -l) -ge 1 ]]; then
+                changed_addons+=("${addon}")
+              fi
+            else
+              changed_addons+=("${addon}")
+            fi
+          done
+          
+          echo "Changed add-ons: ${changed_addons[@]}"
+          echo "addons=${changed_addons[@]}" >> $GITHUB_OUTPUT
+          if [[ ${#changed_addons[@]} -ge 1 ]]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    needs: init
+    runs-on: ubuntu-latest
+    if: needs.init.outputs.changed == 'true'
+    name: Build ${{ matrix.arch }} ${{ matrix.addon }} add-on
+    strategy:
+      matrix:
+        addon: ${{ fromJson(needs.init.outputs.changed_addons) }}
+        arch: ["aarch64"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Get information
+        id: info
+        uses: home-assistant/actions/helpers/info@master
+        with:
+          path: "./${{ matrix.addon }}"
+
+      - name: Check if add-on should be built
+        id: check
+        run: |
+          if [[ "${{ steps.info.outputs.architectures }}" =~ ${{ matrix.arch }} ]]; then
+            echo "build=true" >> $GITHUB_OUTPUT
+          else
+            echo "build=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set build arguments
+        if: steps.check.outputs.build == 'true'
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "BUILD_ARGS=" >> $GITHUB_ENV
+          fi
+
+      - name: Build ${{ matrix.addon }} add-on
+        if: steps.check.outputs.build == 'true'
         uses: home-assistant/builder@master
         with:
           args: |
             ${{ env.BUILD_ARGS }} \
-            --all \
-            --target telegram_bot
+            --${{ matrix.arch }} \
+            --target /data/${{ matrix.addon }} \
+            --image "${{ steps.info.outputs.image }}" \
+            --version ${{ steps.info.outputs.version }} \
+            --docker-hub ghcr.io/${{ github.repository_owner }}
