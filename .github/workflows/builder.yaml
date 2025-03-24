@@ -101,3 +101,17 @@ jobs:
             --image "${{ steps.info.outputs.image }}" \
             --version ${{ steps.info.outputs.version }} \
             --docker-hub ghcr.io/${{ github.repository_owner }}
+
+      - name: Login to GitHub Container Registry
+        if: steps.check.outputs.build == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push to GitHub Container Registry
+        if: steps.check.outputs.build == 'true'
+        run: |
+          docker push ${{ steps.info.outputs.image }}:${{ steps.info.outputs.version }}
+          docker push ${{ steps.info.outputs.image }}:latest
