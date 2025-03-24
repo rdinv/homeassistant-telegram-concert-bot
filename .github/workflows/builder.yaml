@@ -98,6 +98,4 @@ jobs:
             ${{ env.BUILD_ARGS }} \
             --${{ matrix.arch }} \
             --target /data/${{ matrix.addon }} \
-            --image "${{ steps.info.outputs.image }}" \
-            --version ${{ steps.info.outputs.version }} \
-            --docker-hub local
+            --version ${{ steps.info.outputs.version }}
