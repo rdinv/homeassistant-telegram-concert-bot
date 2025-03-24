@@ -1,5 +1,5 @@
 name: "Telegram Concert Bot"
-version: "1.0.1"
+version: "1.0.2"
 slug: "telegram_concert_bot"
 description: "Telegram bot for concert notifications with Home Assistant integration"
 url: "https://github.com/rdinv/homeassistant-telegram-concert-bot"
@@ -20,4 +20,4 @@ options:
 schema:
   telegram_token: "str"
   log_level: "list(trace|debug|info|notice|warning|error|fatal)"
-image: "ghcr.io/{repository}/{arch}-telegram-concert-bot"
+image: "local/{arch}-telegram-concert-bot"
