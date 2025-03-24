@@ -1,13 +1,10 @@
-ARG BUILD_FROM
-FROM $BUILD_FROM
+FROM homeassistant/aarch64-base:latest
 
 # Установка Node.js
-ENV NODE_VERSION 18
 RUN \
     apk add --no-cache \
         nodejs \
-        npm \
-        git
+        npm
 
 # Создание рабочей директории
 WORKDIR /usr/src/app
@@ -17,7 +14,7 @@ COPY run.sh /
 COPY package.json .
 COPY bot.js .
 
-# Установка зависимостей
+# Установка зависимостей Node.js
 RUN npm install
 
 # Права на выполнение
